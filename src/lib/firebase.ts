@@ -12,7 +12,10 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  // Only set databaseURL when defined — avoids Firebase throwing during SSR static prerender
+  ...(process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+    ? { databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL }
+    : {}),
 };
 
 // Initialize Firebase (prevent multiple initializations in dev mode)
@@ -20,7 +23,10 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const auth = getAuth(app);
 const db = getFirestore(app);
-const rtdb = getDatabase(app);
+// Only initialize RTDB when a valid URL is available (not during SSR prerender)
+const rtdb = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+  ? getDatabase(app)
+  : null!;
 const storage = getStorage(app);
 
 export { app, auth, db, rtdb, storage };
